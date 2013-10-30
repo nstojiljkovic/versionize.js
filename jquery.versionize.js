@@ -22,7 +22,30 @@
  ***************************************************************/
 
 ; (function($) {
+	var mediaQueries = {};
+	var mediaQueryListeners = {};
+	var mediaQueriesExcludes = {};
+	var mediaQueriesInvertedExcludes = {};
+	var fallbackQueries = [];
+	var callbackObjects = {};
+	var callbackDependencies = {};
+	var matchQueriesCallbacks = {};
+	var browserSupportsMatchMedia = window.matchMedia( 'only all' ).matches;
+	var versionizeDispatchInitialized = false;
+	var currentQueryMatch = [];
+	var recursionLevel = 0;
+	var maxRecursionLevel = 99;
+	var initMatches = [];
+	var initElementsStack = [];
+	var executedMatches = {};
+	var executedMatchesStack = [];
+	var isInitCallbackInProgress = false;
+
 	$.fn.versionize = function(versionName, callback) {
+		if (isInitCallbackInProgress) {
+			window.console.log('WARNING: Bad code smell - you are calling versionize from an init callback.');
+		}
+
 		if (!$(this).length) {
 			return this;
 		}
@@ -53,13 +76,13 @@
 				$el.after($elSelectedVersion);
 				$el.detach();
 
-				// @todo: update extbase_hijax so this is not needed!
-				$elSelectedVersion.find('.hijax-element').removeAttr('id');
-				versionize.init($elSelectedVersion);
-
 				if (callback && $.isFunction(callback)) {
 					$.proxy(callback, $elSelectedVersion)();
 				}
+
+				// @todo: update extbase_hijax so this is not needed!
+				$elSelectedVersion.find('.hijax-element').removeAttr('id');
+				versionize.init($elSelectedVersion);
 			} else {
 				$elSelectedVersion = $elOriginal.data(versionString);
 
@@ -68,6 +91,10 @@
 					// $el.replaceWith($elSelectedVersion);
 					$el.after($elSelectedVersion);
 					$el.detach();
+
+					// @todo: update extbase_hijax so this is not needed!
+					$elSelectedVersion.find('.hijax-element').removeAttr('id');
+					versionize.init($elSelectedVersion);
 				}
 			}
 		});
@@ -134,24 +161,6 @@
 		};
 	}
 
-	var mediaQueries = {};
-	var mediaQueryListeners = {};
-	var mediaQueriesExcludes = {};
-	var mediaQueriesInvertedExcludes = {};
-	var fallbackQueries = [];
-	var callbackObjects = {};
-	var callbackDependencies = {};
-	var matchQueriesCallbacks = {};
-	var browserSupportsMatchMedia = window.matchMedia( 'only all' ).matches;
-	var versionizeDispatchInitialized = false;
-	var currentQueryMatch = [];
-	var recursionLevel = 0;
-	var maxRecursionLevel = 99;
-	var initMatches = [];
-	var initElementsStack = [];
-	var executedMatches = {};
-	var executedMatchesStack = [];
-
 	function initialize($el, matches) {
 		recursionLevel = 0;
 
@@ -202,10 +211,12 @@
 			$el.data('versionize-initOnce', initArr);
 			if (callback['init']) {
 				try {
+					isInitCallbackInProgress = true;
 					callback['init']($el);
 				} catch (err) {
 					window.console.log('EXCEPTION: ' + err.message);
 				}
+				isInitCallbackInProgress = false;
 			}
 		}
 		if (callback['match'] && !executedMatches[cN+','+qN] && in_array(qN, initMatches)) {
