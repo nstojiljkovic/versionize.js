@@ -33,8 +33,10 @@
 				$elSelectedVersion = null,
 				versionString = 'versionize-ver-' + versionName;
 
-//			window.console.log(versionName);
-//			debugger;
+			if (!$el.data('versionize-original') && initElementsStack[0] != $el) {
+				// first run of versionize on this element
+				$elOriginal.data('versionize-initOnce', (initElementsStack[0].data('versionize-initOnce') || []).slice(0));
+			}
 
 			if (!$elOriginal.data(versionString)) {
 				// create element's version
@@ -43,11 +45,17 @@
 				$elOriginal.data(versionString, $elSelectedVersion);
 				// create reference to the original
 				$elSelectedVersion.data('versionize-original', $elOriginal);
+				$elSelectedVersion.data('versionize-initOnce', $elOriginal.data('versionize-initOnce').slice(0));
+				// $elSelectedVersion.data('versionize-initOnce', []);
 
 				// replaceWith works fine in Zepto, doesn't play nice with jQuery
 				// $el.replaceWith($elSelectedVersion);
 				$el.after($elSelectedVersion);
 				$el.detach();
+
+				// @todo: update extbase_hijax so this is not needed!
+				$elSelectedVersion.find('.hijax-element').removeAttr('id');
+				versionize.init($elSelectedVersion);
 
 				if (callback && $.isFunction(callback)) {
 					$.proxy(callback, $elSelectedVersion)();
@@ -140,19 +148,22 @@
 	var recursionLevel = 0;
 	var maxRecursionLevel = 99;
 	var initMatches = [];
-	var executedMatches = {};
 	var initElementsStack = [];
+	var executedMatches = {};
+	var executedMatchesStack = [];
 
 	function initialize($el, matches) {
-		initMatches = matches || [];
-		executedMatches = {};
 		recursionLevel = 0;
+
+		executedMatchesStack.push(executedMatches);
+		executedMatches = {};
+
 		initElementsStack.push($el);
+		initMatches = matches || [];
+
 		if (initElementsStack.length > 2) {
 			window.console.log('WARNING: Too many recursive calls to versionize.init. Number of calls: ' + initElementsStack.length);
 		}
-//		window.console.log('XXX: ' + initElementsStack.length);
-//		window.console.log($el);
 
 		for (var i = 0; i < currentQueryMatch.length ; i++) {
 			var qN = currentQueryMatch[i];
@@ -163,6 +174,7 @@
 		}
 
 		initElementsStack.pop();
+		executedMatches = executedMatchesStack.pop();
 	};
 
 	function initializeCallbackWithDependencies($el, cN, qN) {
@@ -181,11 +193,13 @@
 	function runCallback($el, cN, qN) {
 		//window.console.log('RUN CALLBACK: ' + cN + ', ' + qN);
 
-		var hash = 'versionize-initOnce-'+cN+'-'+qN;
+		var hash = cN+','+qN;
+		var initArr = $el.data('versionize-initOnce') || [];
 		var callback = callbackObjects[cN][qN] || {};
-		if (!$el.data(hash)) {
-			//window.console.log('INIT: ' + cN + ', ' + qN);
-			$el.data(hash, true);
+
+		if (!in_array(hash, initArr)) {
+			initArr.push(hash);
+			$el.data('versionize-initOnce', initArr);
 			if (callback['init']) {
 				try {
 					callback['init']($el);
