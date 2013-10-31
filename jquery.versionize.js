@@ -41,7 +41,7 @@
 	var executedMatchesStack = [];
 	var isInitCallbackInProgress = false;
 
-	$.fn.versionize = function(versionName, callback) {
+	$.fn.switchToVersion = function(versionName, callback) {
 		if (isInitCallbackInProgress) {
 			window.console.log('WARNING: Bad code smell - you are calling versionize from an init callback.');
 		}
