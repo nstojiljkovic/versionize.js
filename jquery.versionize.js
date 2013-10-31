@@ -22,6 +22,7 @@
  ***************************************************************/
 
 ; (function($) {
+	var deepCopyDataAndEvents = false; //typeof $.zepto !== 'object';
 	var mediaQueries = {};
 	var mediaQueryListeners = {};
 	var mediaQueriesExcludes = {};
@@ -63,13 +64,16 @@
 
 			if (!$elOriginal.data(versionString)) {
 				// create element's version
-				$elSelectedVersion = $elOriginal.clone(true, true);
+				$elSelectedVersion = $elOriginal.clone(deepCopyDataAndEvents, deepCopyDataAndEvents);
 				// assign the version to the original element
 				$elOriginal.data(versionString, $elSelectedVersion);
 				// create reference to the original
 				$elSelectedVersion.data('versionize-original', $elOriginal);
-				$elSelectedVersion.data('versionize-initOnce', $elOriginal.data('versionize-initOnce').slice(0));
-				// $elSelectedVersion.data('versionize-initOnce', []);
+				if (deepCopyDataAndEvents) {
+					$elSelectedVersion.data('versionize-initOnce', $elOriginal.data('versionize-initOnce').slice(0));
+				} else {
+					$elSelectedVersion.data('versionize-initOnce', []);
+				}
 
 				// replaceWith works fine in Zepto, doesn't play nice with jQuery
 				// $el.replaceWith($elSelectedVersion);
