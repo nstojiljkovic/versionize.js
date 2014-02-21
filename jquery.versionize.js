@@ -41,6 +41,7 @@
 	var executedMatches = {};
 	var executedMatchesStack = [];
 	var isInitCallbackInProgress = false;
+	var hashMap = {};
 
 	$.fn.switchToVersion = function(versionName, callback) {
 		if (isInitCallbackInProgress) {
@@ -207,6 +208,7 @@
 		//window.console.log('RUN CALLBACK: ' + cN + ', ' + qN);
 
 		var hash = cN+','+qN;
+		hash = hashMap[hash];
 		var initArr = $el.data('versionize-initOnce') || [];
 		var callback = callbackObjects[cN][qN] || {};
 
@@ -261,6 +263,11 @@
 			}
 			if (typeof matchQueries === 'string') {
 				matchQueries = [matchQueries];
+			}
+			var matchQueriesHash = matchQueries.join(',');
+			for (var i=0; i < matchQueries.length; i++) {
+				var callbackHash = n+','+matchQueries[i];
+				hashMap[callbackHash] = n+','+matchQueriesHash;
 			}
 			if (typeof matchQueries === 'object') {
 				for (var i = 0; i < matchQueries.length ; i++) {
