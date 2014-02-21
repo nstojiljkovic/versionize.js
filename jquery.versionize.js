@@ -47,6 +47,9 @@
 		if (isInitCallbackInProgress) {
 			window.console.log('WARNING: Bad code smell - you are calling versionize from an init callback.');
 		}
+		if (typeof versionName !== "string") {
+			window.console.log('WARNING: versionName variable should be string!');
+		}
 
 		if (!$(this).length) {
 			return this;
