@@ -36,7 +36,6 @@
 	var currentQueryMatch = [];
 	var recursionLevel = 0;
 	var maxRecursionLevel = 99;
-	var initMatches = [];
 	var initElementsStack = [];
 	var executedMatches = {};
 	var executedMatchesStack = [];
@@ -176,7 +175,6 @@
 		executedMatches = {};
 
 		initElementsStack.push($el);
-		initMatches = matches || [];
 
 		if (initElementsStack.length > 2) {
 			window.console.log('WARNING: Too many recursive calls to versionize.init. Number of calls: ' + initElementsStack.length);
@@ -186,7 +184,7 @@
 			var qN = currentQueryMatch[i];
 			for (var j = 0; matchQueriesCallbacks[qN] && j < matchQueriesCallbacks[qN].length ; j++) {
 				var cN = matchQueriesCallbacks[qN][j];
-				initializeCallbackWithDependencies($el, cN, qN);
+				initializeCallbackWithDependencies($el, cN, qN, matches || []);
 			}
 		}
 
@@ -194,20 +192,20 @@
 		executedMatches = executedMatchesStack.pop();
 	};
 
-	function initializeCallbackWithDependencies($el, cN, qN) {
+	function initializeCallbackWithDependencies($el, cN, qN, initMatches) {
 		//window.console.log(cN + ', ' + qN);
 		if (++recursionLevel <= maxRecursionLevel) {
 			var depedencies = callbackDependencies[cN][qN] || [];
 			for (var i = 0; i < depedencies.length ; i++) {
-				initializeCallbackWithDependencies($el, depedencies[i], qN);
+				initializeCallbackWithDependencies($el, depedencies[i], qN, initMatches);
 			}
-			runCallback($el, cN, qN);
+			runCallback($el, cN, qN, initMatches);
 		} else {
 			window.console.log('ERROR: Max recursion level reached for initializing callbacks. Did you make a circular dependency?');
 		}
 	}
 
-	function runCallback($el, cN, qN) {
+	function runCallback($el, cN, qN, initMatches) {
 		//window.console.log('RUN CALLBACK: ' + cN + ', ' + qN);
 
 		var hash = cN+','+qN;
