@@ -41,6 +41,7 @@
 	var executedMatchesStack = [];
 	var isInitCallbackInProgress = false;
 	var hashMap = {};
+	var runLoopQueue = [];
 
 	$.fn.switchToVersion = function(versionName, callback) {
 		if (isInitCallbackInProgress) {
@@ -190,6 +191,10 @@
 
 		initElementsStack.pop();
 		executedMatches = executedMatchesStack.pop();
+
+		if (runLoopQueue.length > 0) {
+			window.versionize.init(runLoopQueue.shift());
+		}
 	};
 
 	function initializeCallbackWithDependencies($el, cN, qN, initMatches) {
@@ -285,6 +290,14 @@
 
 		isQueryActive: function(n) {
 			return in_array(n, currentQueryMatch);
+		},
+
+		scheduleInit: function($el) {
+			if (recursionLevel > 0) {
+				runLoopQueue.push($el);
+			} else {
+				this.init($el);
+			}
 		},
 
 		init: function($el) {
