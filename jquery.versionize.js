@@ -208,6 +208,7 @@
 		} else {
 			window.console.log('ERROR: Max recursion level reached for initializing callbacks. Did you make a circular dependency?');
 		}
+		recursionLevel--;
 	}
 
 	function runCallback($el, cN, qN, initMatches) {
