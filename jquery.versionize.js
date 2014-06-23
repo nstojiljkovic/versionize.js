@@ -301,6 +301,23 @@
 			}
 		},
 
+		deinit: function($el) {
+			for (var i = 0; i < currentQueryMatch.length ; i++) {
+				var qN = currentQueryMatch[i];
+				for (var j = 0; matchQueriesCallbacks[qN] && j < matchQueriesCallbacks[qN].length ; j++) {
+					var cN = matchQueriesCallbacks[qN][j];
+					var callback = callbackObjects[cN][qN] || {};
+					if (callback['deinit']) {
+						try {
+							callback['deinit']($el);
+						} catch (err) {
+							window.console.log('EXCEPTION: ' + err.message);
+						}
+					}
+				}
+			}
+		},
+
 		init: function($el) {
 			if (!versionizeDispatchInitialized) {
 				versionizeDispatchInitialized = true;
